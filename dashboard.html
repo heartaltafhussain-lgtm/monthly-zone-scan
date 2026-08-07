@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monthly Zone Dashboard · NSE India</title>
+<style>
+  :root{
+    --bg:#0b0e14; --card:#12161f; --card2:#171c28; --line:#1f2733;
+    --txt:#e8ecf2; --mut:#93a0b4; --dim:#5d6b82;
+    --green:#2ebd85; --red:#ef5350; --amber:#ffb74d; --purple:#b06ff2;
+    --blue:#42a5f5; --accent:#2ebd85;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:14px 16px 60px}
+
+  /* ---------- header ---------- */
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    padding:14px 16px;background:linear-gradient(135deg,#10161f,#0e1a24);
+    border-bottom:1px solid var(--line)}
+  .logo{font-size:20px;font-weight:800;letter-spacing:.2px}
+  .logo span{color:var(--accent)}
+  .logo small{display:block;font-size:10.5px;color:var(--mut);font-weight:500;letter-spacing:1.5px}
+  .hright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+    background:#16212e;color:var(--blue);border:1px solid #243649}
+  .badge.live{color:var(--green);border-color:#1d4a35;background:#0f241c}
+  .badge.snap{color:var(--amber);border-color:#4a3b1d;background:#241d0f}
+  .btn{background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;cursor:pointer}
+  .btn:hover{border-color:#33415a;background:#1d2434}
+  .btn:active{transform:translateY(1px)}
+  .btn.green{background:linear-gradient(135deg,#1f8f64,#2ebd85);border:none;color:#04120c}
+
+  /* ---------- banner ---------- */
+  .banner{display:none;margin:12px 0 0;padding:10px 14px;border-radius:10px;
+    background:#241d0f;border:1px solid #4a3b1d;color:#ffd9a0;font-size:13px;line-height:1.5}
+  .banner.show{display:block}
+  .banner b{color:#ffb74d}
+
+  /* ---------- date chips ---------- */
+  .dates{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+  .chip{font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;
+    background:var(--card);border:1px solid var(--line);color:var(--mut)}
+  .chip.on{background:#123b2c;border-color:#2ebd85;color:#7ee2b8}
+  .chip:hover{border-color:#33415a}
+
+  /* ---------- cards ---------- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .card .v{font-size:26px;font-weight:800;line-height:1.1}
+  .card .l{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.6px;text-transform:uppercase;margin-top:4px}
+  .card .s{font-size:10.5px;color:var(--dim);margin-top:3px}
+  .g{color:var(--green)} .r{color:var(--red)} .a{color:var(--amber)} .p{color:var(--purple)} .b{color:var(--blue)}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .search{flex:1 1 220px;position:relative}
+  .search input{width:100%;background:#0b0e14;border:1px solid var(--line);color:var(--txt);
+    border-radius:8px;padding:9px 12px 9px 32px;font-size:13px;outline:none}
+  .search input:focus{border-color:#2ebd85}
+  .search .ic{position:absolute;left:10px;top:9px;color:var(--dim);font-size:13px}
+  select{background:#0b0e14;border:1px solid var(--line);color:var(--txt);border-radius:8px;
+    padding:9px 10px;font-size:12.5px;outline:none;max-width:150px}
+  .fbtn{font-size:12px;color:var(--mut);background:none;border:none;cursor:pointer;text-decoration:underline}
+
+  /* ---------- mini chart ---------- */
+  .barchart{display:flex;gap:8px;align-items:flex-end;height:64px;margin:2px 0 14px}
+  .barcell{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+  .barwrap{width:100%;display:flex;align-items:flex-end;height:44px}
+  .bar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:height .4s}
+  .barlbl{font-size:11px;font-weight:700}
+  .bartxt{font-size:10px;color:var(--dim)}
+
+  /* ---------- table ---------- */
+  .tblbox{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .tblwrap{overflow-x:auto;max-height:62vh}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px}
+  thead th{position:sticky;top:0;background:#1a2130;color:#aeb9cc;text-align:left;
+    padding:10px 10px;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;
+    white-space:nowrap;user-select:none;border-bottom:1px solid var(--line)}
+  thead th:hover{color:#fff}
+  thead th .ar{font-size:9px;color:var(--accent)}
+  tbody td{padding:8px 10px;border-bottom:1px solid #151b26;white-space:nowrap}
+  tbody tr:hover td{background:#161d2b}
+  .sym{font-weight:800;color:#fff}
+  .sym a{color:inherit;text-decoration:none}
+  .sym a:hover{color:var(--blue)}
+  .nm{color:var(--mut);font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:800;letter-spacing:.3px}
+  .pill.D{background:#0f2b22;color:#57e0a8}
+  .pill.S{background:#2b1414;color:#ff8a80}
+  .pill.IN_ZONE{background:#0f3d2c;color:#5ff0ae}
+  .pill.NEAR{background:#3a2c10;color:#ffd180}
+  .pill.SWEPT{background:#2a1436;color:#d2a2ff}
+  .num{font-variant-numeric:tabular-nums;text-align:right}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  .tv{color:var(--dim);text-decoration:none;font-size:12px}
+  .tv:hover{color:var(--blue)}
+  .empty{padding:40px;text-align:center;color:var(--mut);font-size:14px}
+
+  /* ---------- actions ---------- */
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 6px}
+  .count{font-size:12px;color:var(--mut);margin-left:auto}
+
+  footer{margin-top:22px;color:var(--dim);font-size:11px;line-height:1.7;border-top:1px solid var(--line);padding-top:14px}
+  footer b{color:var(--mut)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📊 Monthly Zone <span>Dashboard</span>
+    <small>NSE INDIA · DEMAND / SUPPLY ZONE TOUCHES</small>
+  </div>
+  <div class="hright">
+    <span id="srcBadge" class="badge">…</span>
+    <button class="btn" onclick="loadAll(true)">🔄 Refresh</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div id="banner" class="banner"></div>
+
+  <div id="dates" class="dates"></div>
+
+  <div class="cards">
+    <div class="card"><div class="v g" id="cDemand">–</div><div class="l">Demand · In Zone</div><div class="s">aaj zone touch (buy watch)</div></div>
+    <div class="card"><div class="v r" id="cSupply">–</div><div class="l">Supply · In Zone</div><div class="s">aaj zone touch (sell watch)</div></div>
+    <div class="card"><div class="v a" id="cNear">–</div><div class="l">Near Zone</div><div class="s">0.5% ke andar</div></div>
+    <div class="card"><div class="v p" id="cSwept">–</div><div class="l">Swept</div><div class="s">distal toota (invalid hoti)</div></div>
+    <div class="card"><div class="v b" id="cTotal">–</div><div class="l">Total hits</div><div class="s" id="cDate">–</div></div>
+  </div>
+
+  <div class="barchart" id="barchart"></div>
+
+  <div class="filters">
+    <div class="search"><span class="ic">🔍</span>
+      <input id="q" placeholder="Symbol ya company name search karein… (e.g. TATA, BANK, PHARMA)" oninput="applyFilter()">
+    </div>
+    <select id="fType" onchange="applyFilter()">
+      <option value="">Type: All</option><option value="DEMAND">Demand</option><option value="SUPPLY">Supply</option>
+    </select>
+    <select id="fStatus" onchange="applyFilter()">
+      <option value="">Status: All</option>
+      <option value="IN_ZONE">IN ZONE</option><option value="NEAR">NEAR</option><option value="SWEPT">SWEPT</option>
+    </select>
+    <select id="fAge" onchange="applyFilter()">
+      <option value="">Zone Age: All</option>
+      <option value="3">≤ 3 months (fresh)</option>
+      <option value="6">≤ 6 months</option>
+      <option value="12">≤ 12 months</option>
+      <option value="1000">All (old included)</option>
+    </select>
+    <select id="fPrice" onchange="applyFilter()">
+      <option value="">Price: All</option>
+      <option value="100">≥ ₹100</option>
+      <option value="500">≥ ₹500</option>
+      <option value="1000">≥ ₹1000</option>
+      <option value="5000">≥ ₹5000</option>
+    </select>
+    <button class="fbtn" onclick="clearFilters()">✕ Clear</button>
+  </div>
+
+  <div class="actions">
+    <button class="btn green" onclick="copyWatchlist()">📋 Copy Watchlist (NSE:)</button>
+    <button class="btn" onclick="exportCSV()">⬇️ Download CSV</button>
+    <span class="count" id="count">–</span>
+  </div>
+
+  <div class="tblbox">
+    <div class="tblwrap">
+      <table id="tbl">
+        <thead><tr>
+          <th data-k="S">Symbol <span class="ar"></span></th>
+          <th data-k="N">Company</th>
+          <th data-k="T">Type</th>
+          <th data-k="St">Status</th>
+          <th data-k="Z">Zone Formed</th>
+          <th data-k="A">Age (M)</th>
+          <th data-k="L" class="num">LTP</th>
+          <th data-k="Lo" class="num">Today Low</th>
+          <th data-k="P" class="num">Zone Top</th>
+          <th data-k="D" class="num">Zone Bottom</th>
+          <th data-k="G" class="num">Gap %</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="tbody"><tr><td colspan="12" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <b>Kaise chalta hai:</b> Ye dashboard har baar khulte hi aapke GitHub repo
+    (<span id="repoTxt">heartaltafhussain-lgtm/monthly-zone-scan</span>) se sabse nayi
+    <code>reports/zone_report_*.csv</code> fetch karta hai — repo <b>public</b> hone par live update hota hai.
+    Repo private/offline ho to embedded snapshot (aaj ka data) dikhata hai.
+    Report har din raat 9:30 PM IST ke baad ban jaati hai (GitHub Actions).
+    <br><br>
+    ⚠️ <b>Disclaimer:</b> Screening tool — trading advice nahi. Zone touch ka matlab entry signal nahi;
+    confirmation + SL/TP management apne system se karein. Trade se pehle TradingView pe verify karein.
+  </footer>
+</div>
+
+<!-- Embedded snapshot (fallback jab repo private/offline ho) -->
+<script type="application/json" id="snapshot">{"date": "2026-08-07", "rows": [{"S": "360ONE", "N": "360 ONE WAM LIMITED", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 1172.9000244140625, "Lo": 1163.0, "P": 1096.2291460101105, "D": 1290.0109448732665, "G": 0.0}, {"S": "3MINDIA", "N": "3M India Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 36105.0, "Lo": 35870.0, "P": 33997.6328125, "D": 37487.09942436396, "G": 0.0}, {"S": "AARTIPHARM", "N": "Aarti Pharmalabs Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 692.0999755859375, "Lo": 689.5499877929688, "P": 745.6475219726562, "D": 571.687980097061, "G": 0.0}, {"S": "ABB", "N": "ABB India Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 7614.0, "Lo": 7580.0, "P": 6749.8134765625, "D": 7772.940618000919, "G": 0.0}, {"S": "ADVENZYMES", "N": "Advanced Enzyme Technologies Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 326.5, "Lo": 326.5, "P": 322.6280822753906, "D": 402.57562895823986, "G": 0.0}, {"S": "AFFLE", "N": "Affle 3i Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 1697.300048828125, "Lo": 1681.199951171875, "P": 1660.5, "D": 1805.0, "G": 0.0}, {"S": "AHLEAST", "N": "Asian Hotels (East) Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2024-09", "A": 23, "L": 142.5, "Lo": 141.6999969482422, "P": 141.99541175073068, "D": 121.7201050672907, "G": 0.0}, {"S": "ALKEM", "N": "Alkem Laboratories Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 5591.5, "Lo": 5506.0, "P": 5526.03466796875, "D": 5844.812309456363, "G": 0.0}, {"S": "ALPA", "N": "Alpa Laboratories Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 68.30000305175781, "Lo": 68.12000274658203, "P": 66.01000213623047, "D": 76.18000030517578, "G": 0.0}, {"S": "ANGELONE", "N": "Angel One Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 291.29998779296875, "Lo": 291.1000061035156, "P": 273.53383467567966, "D": 337.5713829407825, "G": 0.0}, {"S": "APEX", "N": "Apex Frozen Foods Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 372.54998779296875, "Lo": 370.95001220703125, "P": 371.04998779296875, "D": 316.0, "G": 0.0}, {"S": "APOLLOPIPE", "N": "Apollo Pipes Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 522.4500122070312, "Lo": 520.0, "P": 433.0477600097656, "D": 538.3190512865822, "G": 0.0}, {"S": "ARTEMISMED", "N": "Artemis Medicare Services Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 315.20001220703125, "Lo": 312.0, "P": 313.7113037109375, "D": 348.7895967152651, "G": 0.0}, {"S": "ASIANPAINT", "N": "Asian Paints Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 2713.199951171875, "Lo": 2709.0, "P": 2745.678466796875, "D": 2960.0187763517797, "G": 0.0}, {"S": "ASTRAL", "N": "Astral Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 1436.5999755859375, "Lo": 1435.0, "P": 1476.5999755859375, "D": 1332.9000244140625, "G": 0.0}, {"S": "AURUM", "N": "Aurum PropTech Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 226.27000427246094, "Lo": 221.82000732421875, "P": 212.8000030517578, "D": 264.79998779296875, "G": 0.0}, {"S": "AUTOAXLES", "N": "Automotive Axles Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 1817.699951171875, "Lo": 1810.0, "P": 1828.1779131870833, "D": 2078.8153236463377, "G": 0.0}, {"S": "BAJAJ-AUTO", "N": "Bajaj Auto Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2024-10", "A": 22, "L": 11662.0, "Lo": 11574.0, "P": 10508.052755670393, "D": 12285.362561538223, "G": 0.0}, {"S": "BAJAJFINSV", "N": "Bajaj Finserv Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 2002.5999755859375, "Lo": 2001.300048828125, "P": 1906.3732128614463, "D": 2108.201137172445, "G": 0.0}, {"S": "BAJAJHLDNG", "N": "Bajaj Holdings & Investment Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 11369.0, "Lo": 11314.0, "P": 10430.39293335522, "D": 11700.60944738903, "G": 0.0}, {"S": "BALKRISIND", "N": "Balkrishna Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-08", "A": 12, "L": 2459.5, "Lo": 2430.0, "P": 2421.2381841021797, "D": 2777.9507177113082, "G": 0.0}, {"S": "BANKINDIA", "N": "Bank of India", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 142.22000122070312, "Lo": 142.0, "P": 142.83418290918274, "D": 132.38550212826928, "G": 0.0}, {"S": "BAYERCROP", "N": "Bayer Cropscience Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 4197.5, "Lo": 4190.0, "P": 4925.615281470508, "D": 4052.542956535075, "G": 0.0}, {"S": "BEL", "N": "Bharat Electronics Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 399.54998779296875, "Lo": 398.3500061035156, "P": 426.1856451609873, "D": 378.83724126751684, "G": 0.0}, {"S": "BERGEPAINT", "N": "Berger Paints (I) Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 531.25, "Lo": 530.9000244140625, "P": 508.26261280556344, "D": 590.094751424942, "G": 0.0}, {"S": "BLUESTARCO", "N": "Blue Star Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2024-09", "A": 23, "L": 1502.9000244140625, "Lo": 1501.0, "P": 1721.2002942317065, "D": 1468.611003027972, "G": 0.0}, {"S": "CANTABIL", "N": "Cantabil Retail India Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2024-12", "A": 20, "L": 226.75, "Lo": 225.1300048828125, "P": 250.75340694969418, "D": 209.63342139304467, "G": 0.0}, {"S": "CARTRADE", "N": "Cartrade Tech Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 2791.5, "Lo": 2738.0, "P": 2649.300048828125, "D": 2962.0, "G": 0.0}, {"S": "CESC", "N": "CESC Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 162.75, "Lo": 162.2899932861328, "P": 163.28883729010366, "D": 191.41943633872768, "G": 0.0}, {"S": "COFORGE", "N": "Coforge Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-12", "A": 8, "L": 1781.0999755859375, "Lo": 1772.800048828125, "P": 1765.5871358787817, "D": 1918.9092483389322, "G": 0.0}, {"S": "CYIENTDLM", "N": "Cyient DLM Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 683.7000122070312, "Lo": 658.9500122070312, "P": 644.25, "D": 744.25, "G": 0.0}, {"S": "DGCONTENT", "N": "Digicontent Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 25.799999237060547, "Lo": 25.100000381469727, "P": 27.649999618530273, "D": 21.610000610351562, "G": 0.0}, {"S": "DLINKINDIA", "N": "D-Link (India) Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 442.0, "Lo": 438.0, "P": 441.927001953125, "D": 535.3869856838605, "G": 0.0}, {"S": "DWARKESH", "N": "Dwarikesh Sugar Industries Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 40.7400016784668, "Lo": 40.25, "P": 40.872154578500606, "D": 32.045448076776864, "G": 0.0}, {"S": "ESAFSFB", "N": "ESAF Small Finance Bank Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 41.900001525878906, "Lo": 41.29999923706055, "P": 37.0, "D": 42.9900016784668, "G": 0.0}, {"S": "FAZE3Q", "N": "Faze Three Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-08", "A": 12, "L": 574.0499877929688, "Lo": 535.3499755859375, "P": 551.9000244140625, "D": 747.9500122070312, "G": 0.0}, {"S": "FINEORG", "N": "Fine Organic Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2024-12", "A": 20, "L": 5115.0, "Lo": 4980.0, "P": 4833.160880801572, "D": 5316.427399274261, "G": 0.0}, {"S": "GENESYS", "N": "Genesys International Corporation Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-07", "A": 1, "L": 225.64999389648438, "Lo": 221.85000610351562, "P": 220.0, "D": 377.0, "G": 0.0}, {"S": "GENCON", "N": "Generic Engineering Construction and Projects Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 39.560001373291016, "Lo": 39.16999816894531, "P": 38.7400016784668, "D": 53.5, "G": 0.0}, {"S": "GMDCLTD", "N": "Gujarat Mineral Development Corporation Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 583.4500122070312, "Lo": 580.2999877929688, "P": 598.9500122070312, "D": 513.0, "G": 0.0}, {"S": "GODREJAGRO", "N": "Godrej Agrovet Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 543.9000244140625, "Lo": 543.5, "P": 583.9530525313685, "D": 496.4533186222811, "G": 0.0}, {"S": "GODREJPROP", "N": "Godrej Properties Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 2088.60009765625, "Lo": 2074.10009765625, "P": 1994.7579345703125, "D": 2318.7916673720206, "G": 0.0}, {"S": "GPTHEALTH", "N": "GPT Healthcare Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 161.83999633789062, "Lo": 161.61000061035156, "P": 162.080078125, "D": 182.3084216703246, "G": 0.0}, {"S": "GRAPHITE", "N": "Graphite India Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 718.5499877929688, "Lo": 716.2000122070312, "P": 699.421875, "D": 793.687103271785, "G": 0.0}, {"S": "GRINDWELL", "N": "Grindwell Norton Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 2149.60009765625, "Lo": 2091.10009765625, "P": 1883.1180419921875, "D": 2260.5949266651182, "G": 0.0}, {"S": "GREENLAM", "N": "Greenlam Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 270.29998779296875, "Lo": 265.6000061035156, "P": 275.40362548828125, "D": 310.9878271746622, "G": 0.0}, {"S": "GUJAPOLLO", "N": "Gujarat Apollo Industries Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-07", "A": 13, "L": 370.0, "Lo": 363.5, "P": 383.1059875488281, "D": 322.25123214878926, "G": 0.0}, {"S": "GUJRAFFIA", "N": "Gujarat Raffia Industries Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-10", "A": 10, "L": 40.70000076293945, "Lo": 40.099998474121094, "P": 40.5099983215332, "D": 35.45000076293945, "G": 0.0}, {"S": "HATSUN", "N": "Hatsun Agro Product Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-10", "A": 10, "L": 940.0499877929688, "Lo": 912.0, "P": 943.8321966947736, "D": 866.8463842662793, "G": 0.0}, {"S": "HDFCAMC", "N": "HDFC Asset Management Company Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 2536.5, "Lo": 2521.199951171875, "P": 2416.055620518853, "D": 2839.3965094992277, "G": 0.0}, {"S": "HESTERBIO", "N": "Hester Biosciences Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 2428.0, "Lo": 2428.0, "P": 2380.772216796875, "D": 2663.609111203456, "G": 0.0}, {"S": "HINDALCO", "N": "Hindalco Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 1031.050048828125, "Lo": 1017.0, "P": 1032.6131591796875, "D": 1169.8969824893504, "G": 0.0}, {"S": "HINDZINC", "N": "Hindustan Zinc Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 597.0, "Lo": 590.0499877929688, "P": 554.8621506785097, "D": 719.8477125036038, "G": 0.0}, {"S": "HINDZINC", "N": "Hindustan Zinc Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 597.0, "Lo": 590.0499877929688, "P": 595.9500122070312, "D": 678.25, "G": 0.0}, {"S": "HUBTOWN", "N": "Hubtown Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-06", "A": 14, "L": 177.30999755859375, "Lo": 177.00999450683594, "P": 194.55999755859375, "D": 162.0500030517578, "G": 0.0}, {"S": "ICDSLTD", "N": "ICDS Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 43.79999923706055, "Lo": 43.79999923706055, "P": 48.4900016784668, "D": 37.130001068115234, "G": 0.0}, {"S": "ICRA", "N": "ICRA Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 5180.0, "Lo": 5131.0, "P": 5396.64013671875, "D": 4868.625796310107, "G": 0.0}, {"S": "INDIANB", "N": "Indian Bank", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 890.3499755859375, "Lo": 878.0999755859375, "P": 892.6834716796875, "D": 790.9506434879147, "G": 0.0}, {"S": "INDORAMA", "N": "Indo Rama Synthetics (India) Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-11", "A": 9, "L": 61.04999923706055, "Lo": 60.0, "P": 60.45000076293945, "D": 74.25, "G": 0.0}, {"S": "INDUSINDBK", "N": "IndusInd Bank Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-03", "A": 17, "L": 1005.0999755859375, "Lo": 1004.4000244140625, "P": 957.0498738602826, "D": 1084.793006317995, "G": 0.0}, {"S": "INNOVANA", "N": "Innovana Thinklabs Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-06", "A": 14, "L": 328.5, "Lo": 328.5, "P": 359.29998779296875, "D": 270.5, "G": 0.0}, {"S": "ITDC", "N": "India Tourism Development Corporation Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 705.0, "Lo": 702.9000244140625, "P": 607.3257225692236, "D": 736.042409338583, "G": 0.0}, {"S": "JINDALSTEL", "N": "JINDAL STEEL LIMITED", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 1097.0, "Lo": 1092.0999755859375, "P": 1132.0, "D": 997.0999755859375, "G": 0.0}, {"S": "JKCEMENT", "N": "JK Cement Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-06", "A": 14, "L": 5371.5, "Lo": 5363.0, "P": 5463.9609375, "D": 4889.98387180648, "G": 0.0}, {"S": "JKPAPER", "N": "JK Paper Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 386.0, "Lo": 384.1499938964844, "P": 362.98223876953125, "D": 421.15405702719073, "G": 0.0}, {"S": "JUBLPHARMA", "N": "Jubilant Pharmova Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 928.7999877929688, "Lo": 914.4000244140625, "P": 972.9337437683739, "D": 794.4742432117172, "G": 0.0}, {"S": "KARMAENG", "N": "Karma Energy Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 43.45000076293945, "Lo": 38.220001220703125, "P": 44.02000045776367, "D": 34.380001068115234, "G": 0.0}, {"S": "KAVDEFENCE", "N": "Kavveri Defence & Wireless Technologies Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-09", "A": 11, "L": 57.2400016784668, "Lo": 56.810001373291016, "P": 64.05000305175781, "D": 43.810001373291016, "G": 0.0}, {"S": "KCP", "N": "KCP Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 151.89999389648438, "Lo": 150.0, "P": 156.44753827419237, "D": 124.61571328492029, "G": 0.0}, {"S": "KHAICHEM", "N": "Khaitan Chemicals & Fertilizers Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 52.540000915527344, "Lo": 51.599998474121094, "P": 53.98795700073242, "D": 43.12842321376348, "G": 0.0}, {"S": "KIOCL", "N": "KIOCL Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 390.70001220703125, "Lo": 389.54998779296875, "P": 334.1499938964844, "D": 453.70001220703125, "G": 0.0}, {"S": "KSB", "N": "Ksb Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 794.1500244140625, "Lo": 783.2000122070312, "P": 792.93359375, "D": 713.9239000847774, "G": 0.0}, {"S": "LGHL", "N": "Laxmi Goldorna House Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-06", "A": 14, "L": 202.36000061035156, "Lo": 195.10000610351562, "P": 231.0833282470703, "D": 192.75, "G": 0.0}, {"S": "LOTUSEYE", "N": "Lotus Eye Hospital and Institute Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-11", "A": 9, "L": 118.87999725341797, "Lo": 115.86000061035156, "P": 116.98999786376953, "D": 139.1999969482422, "G": 0.0}, {"S": "MAHABANK", "N": "Bank of Maharashtra", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 77.5, "Lo": 77.19999694824219, "P": 78.07946014404297, "D": 75.05556997236958, "G": 0.0}, {"S": "MAHSCOOTER", "N": "Maharashtra Scooters Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 13808.0, "Lo": 13665.0, "P": 13060.41449517864, "D": 14857.66470533978, "G": 0.0}, {"S": "MAHLOG", "N": "Mahindra Logistics Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 409.8999938964844, "Lo": 407.20001220703125, "P": 364.8217468261719, "D": 420.32525795268947, "G": 0.0}, {"S": "MANALIPETC", "N": "Manali Petrochemicals Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 65.56999969482422, "Lo": 65.22000122070312, "P": 55.40999984741211, "D": 65.9000015258789, "G": 0.0}, {"S": "MAZDOCK", "N": "Mazagon Dock Shipbuilders Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 2515.699951171875, "Lo": 2496.89990234375, "P": 2564.9091796875, "D": 2057.39990234375, "G": 0.0}, {"S": "MEDPLUS", "N": "Medplus Health Services Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2024-11", "A": 21, "L": 697.2000122070312, "Lo": 681.0, "P": 682.0, "D": 616.0, "G": 0.0}, {"S": "MEDPLUS", "N": "Medplus Health Services Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 697.2000122070312, "Lo": 681.0, "P": 806.1500244140625, "D": 678.0499877929688, "G": 0.0}, {"S": "MMFL", "N": "MM Forgings Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2024-10", "A": 22, "L": 625.0, "Lo": 599.9500122070312, "P": 584.4842529296875, "D": 715.0391118479487, "G": 0.0}, {"S": "MOLDTECH", "N": "Mold-Tek Technologies Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 191.57000732421875, "Lo": 189.61000061035156, "P": 174.4552001953125, "D": 229.8262609771628, "G": 0.0}, {"S": "MUNJALAU", "N": "Munjal Auto Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 103.0999984741211, "Lo": 102.51000213623047, "P": 90.14214324951172, "D": 107.46009435285356, "G": 0.0}, {"S": "NAUKRI", "N": "Info Edge (India) Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 1225.699951171875, "Lo": 1225.4000244140625, "P": 1242.8240966796875, "D": 1381.3909548362215, "G": 0.0}, {"S": "NAZARA", "N": "Nazara Technologies Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-08", "A": 12, "L": 345.8999938964844, "Lo": 344.5, "P": 324.6499938964844, "D": 359.0, "G": 0.0}, {"S": "NESCO", "N": "Nesco Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 1046.800048828125, "Lo": 1043.0, "P": 1095.0481054780066, "D": 989.6270152436205, "G": 0.0}, {"S": "NIBL", "N": "NRB Industrial Bearings Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2024-10", "A": 22, "L": 34.959999084472656, "Lo": 34.040000915527344, "P": 35.060001373291016, "D": 45.900001525878906, "G": 0.0}, {"S": "NORBTEAEXP", "N": "Norben Tea & Exports Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-12", "A": 8, "L": 65.0, "Lo": 62.5099983215332, "P": 71.33999633789062, "D": 57.0099983215332, "G": 0.0}, {"S": "OBEROIRLTY", "N": "Oberoi Realty Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-07", "A": 13, "L": 1779.0999755859375, "Lo": 1770.5, "P": 1736.4668247190855, "D": 1993.0252908329799, "G": 0.0}, {"S": "OFSS", "N": "Oracle Financial Services Software Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 11619.0, "Lo": 11572.0, "P": 10847.95321368794, "D": 12262.499626399569, "G": 0.0}, {"S": "ONGC", "N": "Oil & Natural Gas Corporation Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 239.94000244140625, "Lo": 238.0500030517578, "P": 243.1783357059354, "D": 223.35410887403685, "G": 0.0}, {"S": "ONWARDTEC", "N": "Onward Technologies Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 286.45001220703125, "Lo": 278.6000061035156, "P": 274.2779391541773, "D": 325.8266163239859, "G": 0.0}, {"S": "PAISALO", "N": "Paisalo Digital Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2024-10", "A": 22, "L": 69.04000091552734, "Lo": 68.75, "P": 60.65427780151367, "D": 81.65482221363062, "G": 0.0}, {"S": "PANACEABIO", "N": "Panacea Biotec Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 412.29998779296875, "Lo": 410.3500061035156, "P": 412.8500061035156, "D": 360.20001220703125, "G": 0.0}, {"S": "PHOENIXLTD", "N": "The Phoenix Mills Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2024-10", "A": 22, "L": 1897.5, "Lo": 1896.0, "P": 1788.8588077738027, "D": 2062.2274233712437, "G": 0.0}, {"S": "POONAWALLA", "N": "Poonawalla Fincorp Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 472.0, "Lo": 471.20001220703125, "P": 479.0, "D": 570.4000244140625, "G": 0.0}, {"S": "POWERGRID", "N": "Power Grid Corporation of India Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 272.04998779296875, "Lo": 268.3500061035156, "P": 281.06344975365533, "D": 249.25183688611412, "G": 0.0}, {"S": "PRIMESECU", "N": "Prime Securities Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 288.75, "Lo": 282.29998779296875, "P": 261.7436828613281, "D": 312.21286188863155, "G": 0.0}, {"S": "PROZONER", "N": "Prozone Realty Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-09", "A": 11, "L": 42.720001220703125, "Lo": 42.0, "P": 43.619998931884766, "D": 39.310001373291016, "G": 0.0}, {"S": "PSPPROJECT", "N": "PSP Projects Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-01", "A": 7, "L": 964.6500244140625, "Lo": 955.0, "P": 867.5499877929688, "D": 1029.9000244140625, "G": 0.0}, {"S": "RALLIS", "N": "Rallis India Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 212.77000427246094, "Lo": 212.0, "P": 230.4800567626953, "D": 192.0177412960692, "G": 0.0}, {"S": "RAMAPHO", "N": "Rama Phosphates Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-07", "A": 13, "L": 124.20999908447266, "Lo": 124.0, "P": 125.70745086669922, "D": 96.36941702836707, "G": 0.0}, {"S": "RANEHOLDIN", "N": "Rane Holdings Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 1752.300048828125, "Lo": 1740.0, "P": 1682.521728515625, "D": 1897.5273598936724, "G": 0.0}, {"S": "RESPONIND", "N": "Responsive Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 170.92999267578125, "Lo": 169.4199981689453, "P": 165.77000427246094, "D": 202.22999572753906, "G": 0.0}, {"S": "ROSSARI", "N": "Rossari Biotech Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 518.8499755859375, "Lo": 518.3499755859375, "P": 495.7717590332031, "D": 615.5062616372658, "G": 0.0}, {"S": "SAHYADRI", "N": "Sahyadri Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 335.0, "Lo": 329.79998779296875, "P": 308.2005615234375, "D": 336.9223388525266, "G": 0.0}, {"S": "SARDAEN", "N": "Sarda Energy & Minerals Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 498.70001220703125, "Lo": 498.1499938964844, "P": 520.9500122070312, "D": 453.1000061035156, "G": 0.0}, {"S": "SESHAPAPER", "N": "Seshasayee Paper and Boards Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 230.44000244140625, "Lo": 229.99000549316406, "P": 253.1780576072421, "D": 209.74919251106604, "G": 0.0}, {"S": "SHREYANIND", "N": "Shreyans Industries Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 142.00999450683594, "Lo": 142.00999450683594, "P": 146.43373828606934, "D": 120.70074560911898, "G": 0.0}, {"S": "SMCGLOBAL", "N": "SMC Global Securities Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 79.6500015258789, "Lo": 79.0, "P": 75.63119491288491, "D": 88.06246034067853, "G": 0.0}, {"S": "SPLPETRO", "N": "Supreme Petrochem Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-06", "A": 14, "L": 706.5, "Lo": 693.4000244140625, "P": 698.114501953125, "D": 525.5765602873154, "G": 0.0}, {"S": "STEELCITY", "N": "Steel City Securities Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 84.12999725341797, "Lo": 84.05000305175781, "P": 80.20435924902716, "D": 87.69607875123157, "G": 0.0}, {"S": "SUNTV", "N": "Sun TV Network Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 487.6000061035156, "Lo": 486.20001220703125, "P": 588.9074472558576, "D": 477.2078301071332, "G": 0.0}, {"S": "TARMAT", "N": "Tarmat Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 50.0099983215332, "Lo": 49.47999954223633, "P": 53.540000915527344, "D": 46.2599983215332, "G": 0.0}, {"S": "TATACHEM", "N": "Tata Chemicals Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 674.6500244140625, "Lo": 674.0, "P": 679.5519059987304, "D": 571.5129923118551, "G": 0.0}, {"S": "TATAPOWER", "N": "Tata Power Company Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 379.70001220703125, "Lo": 377.29998779296875, "P": 377.65980009847783, "D": 340.3907303086808, "G": 0.0}, {"S": "TATASTEEL", "N": "Tata Steel Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 188.22000122070312, "Lo": 187.9600067138672, "P": 189.22760009765625, "D": 173.74685534440192, "G": 0.0}, {"S": "TBZ", "N": "Tribhovandas Bhimji Zaveri Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 273.70001220703125, "Lo": 271.0, "P": 232.02506933403978, "D": 288.49991519909514, "G": 0.0}, {"S": "TECHM", "N": "Tech Mahindra Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 1643.5999755859375, "Lo": 1636.4000244140625, "P": 1586.1455078125, "D": 1712.3683482719293, "G": 0.0}, {"S": "TECHNOE", "N": "Techno Electric & Engineering Company Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 1044.1500244140625, "Lo": 991.1500244140625, "P": 1077.3356449508967, "D": 780.3229276139054, "G": 0.0}, {"S": "TECHNOE", "N": "Techno Electric & Engineering Company Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 1044.1500244140625, "Lo": 991.1500244140625, "P": 1109.5, "D": 978.0, "G": 0.0}, {"S": "TEGA", "N": "Tega Industries Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-07", "A": 13, "L": 1638.199951171875, "Lo": 1580.0, "P": 1638.5109334203098, "D": 1465.5786699523203, "G": 0.0}, {"S": "TORNTPOWER", "N": "Torrent Power Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-02", "A": 6, "L": 1335.0, "Lo": 1321.0, "P": 1368.6287841796875, "D": 1214.860303401947, "G": 0.0}, {"S": "TORNTPOWER", "N": "Torrent Power Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 1335.0, "Lo": 1321.0, "P": 1485.8537330912914, "D": 1295.5129392843714, "G": 0.0}, {"S": "UFLEX", "N": "UFLEX Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 493.79998779296875, "Lo": 480.1000061035156, "P": 450.8563349116444, "D": 526.3300704075573, "G": 0.0}, {"S": "UNITDSPR", "N": "United Spirits Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 1516.199951171875, "Lo": 1514.9000244140625, "P": 1510.0126495186103, "D": 1630.8037035650989, "G": 0.0}, {"S": "VASWANI", "N": "Vaswani Industries Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 51.33000183105469, "Lo": 50.5, "P": 48.2599983215332, "D": 65.52999877929688, "G": 0.0}, {"S": "VESUVIUS", "N": "Vesuvius India Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-05", "A": 15, "L": 448.0, "Lo": 445.1000061035156, "P": 462.93994140625, "D": 394.63038573349047, "G": 0.0}, {"S": "VGL", "N": "VARVEE GLOBAL LIMITED", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 61.54999923706055, "Lo": 61.220001220703125, "P": 62.70000076293945, "D": 72.0, "G": 0.0}, {"S": "VRLLOG", "N": "VRL Logistics Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-08", "A": 12, "L": 284.95001220703125, "Lo": 281.8999938964844, "P": 282.2864183977132, "D": 313.97409142556177, "G": 0.0}, {"S": "WANBURY", "N": "Wanbury Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-01", "A": 19, "L": 264.6000061035156, "Lo": 262.0, "P": 248.0, "D": 323.5299987792969, "G": 0.0}, {"S": "WEALTH", "N": "Wealth First Portfolio Managers Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2025-06", "A": 14, "L": 936.0999755859375, "Lo": 934.0, "P": 936.7187152743202, "D": 789.1682876106466, "G": 0.0}, {"S": "WIPRO", "N": "Wipro Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 186.9499969482422, "Lo": 185.64999389648438, "P": 185.52120971679688, "D": 210.57506011256086, "G": 0.0}, {"S": "WSTCSTPAPR", "N": "West Coast Paper Mills Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2025-02", "A": 18, "L": 593.0999755859375, "Lo": 589.75, "P": 524.7111206054688, "D": 632.4748787238991, "G": 0.0}, {"S": "XCHANGING", "N": "Xchanging Solutions Limited", "T": "SUPPLY", "St": "IN_ZONE", "Z": "2026-03", "A": 5, "L": 67.66999816894531, "Lo": 67.4000015258789, "P": 65.80000305175781, "D": 77.0, "G": 0.0}, {"S": "XPROINDIA", "N": "Xpro India Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-06", "A": 2, "L": 1080.800048828125, "Lo": 1075.5, "P": 1111.2733154296875, "D": 997.8291949893804, "G": 0.0}, {"S": "ZODIAC", "N": "Zodiac Energy Limited", "T": "DEMAND", "St": "IN_ZONE", "Z": "2026-04", "A": 4, "L": 253.3000030517578, "Lo": 251.0, "P": 252.0, "D": 205.5500030517578, "G": 0.0}, {"S": "PATELENG", "N": "Patel Engineering Limited", "T": "DEMAND", "St": "NEAR", "Z": "2026-06", "A": 2, "L": 28.729999542236328, "Lo": 28.399999618530273, "P": 28.3799991607666, "D": 24.90999984741211, "G": 0.07042414800112211}, {"S": "ATLASCYCLE", "N": "Atlas Cycles (Haryana) Limited", "T": "DEMAND", "St": "NEAR", "Z": "2025-05", "A": 15, "L": 99.4000015258789, "Lo": 97.31999969482422, "P": 97.08000183105469, "D": 76.0999984741211, "G": 0.24660693025289343}, {"S": "NATHBIOGEN", "N": "Nath Bio-Genes (India) Limited", "T": "DEMAND", "St": "NEAR", "Z": "2026-04", "A": 4, "L": 157.75, "Lo": 156.0, "P": 155.47999572753906, "D": 126.1500015258789, "G": 0.33333607209034455}, {"S": "ULTRACEMCO", "N": "UltraTech Cement Limited", "T": "SUPPLY", "St": "NEAR", "Z": "2026-03", "A": 5, "L": 12030.0, "Lo": 11970.0, "P": 12132.359298651276, "D": 12847.756783521221, "G": 0.48334684985320375}, {"S": "COASTCORP", "N": "Coastal Corporation Limited", "T": "DEMAND", "St": "SWEPT", "Z": "2026-04", "A": 4, "L": 42.90999984741211, "Lo": 37.02000045776367, "P": 46.4900016784668, "D": 38.31999969482422, "G": 0.0}, {"S": "IMFA", "N": "Indian Metals & Ferro Alloys Limited", "T": "SUPPLY", "St": "SWEPT", "Z": "2026-01", "A": 7, "L": 1477.5, "Lo": 1472.9000244140625, "P": 1338.69912281144, "D": 1495.7426897387813, "G": 0.0}, {"S": "LTF", "N": "L&T Finance Limited", "T": "SUPPLY", "St": "SWEPT", "Z": "2026-01", "A": 7, "L": 309.1000061035156, "Lo": 308.3500061035156, "P": 310.5526091616703, "D": 313.37359453939126, "G": 0.0}, {"S": "PERSISTENT", "N": "Persistent Systems Limited", "T": "SUPPLY", "St": "SWEPT", "Z": "2026-06", "A": 2, "L": 5505.0, "Lo": 5465.0, "P": 4584.07875439486, "D": 5585.99874153021, "G": 0.0}, {"S": "RELAXO", "N": "Relaxo Footwears Limited", "T": "SUPPLY", "St": "SWEPT", "Z": "2026-03", "A": 5, "L": 424.79998779296875, "Lo": 420.25, "P": 348.1000061035156, "D": 425.95001220703125, "G": 0.0}, {"S": "TTKHLTCARE", "N": "TTK Healthcare Limited", "T": "SUPPLY", "St": "SWEPT", "Z": "2026-03", "A": 5, "L": 1098.199951171875, "Lo": 1073.199951171875, "P": 899.0613403320312, "D": 1111.8367349788468, "G": 0.0}]}</script>
+
+<script>
+"use strict";
+
+/* ================= configuration ================= */
+var REPO = { owner: "heartaltafhussain-lgtm", repo: "monthly-zone-scan", branch: "main" };
+
+/* ================= state ================= */
+var ALL = [];          // raw rows (internal format)
+var DATE = null;       // current report date
+var SRC = "none";      // 'live' | 'snap'
+var SORT = { k: "St", dir: 1 };
+var STATUS_PRIO = { IN_ZONE: 0, NEAR: 1, SWEPT: 2 };
+
+/* ================= helpers ================= */
+function $(id){ return document.getElementById(id); }
+function fmt(x, d){
+  var n = parseFloat(x);
+  if (!isFinite(n)) return String(x == null ? "" : x);
+  return n.toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function num(x){ return parseFloat(x); }
+
+function parseCSV(text){
+  var rows = [], row = [], cur = "", inQ = false;
+  for (var i = 0; i < text.length; i++){
+    var c = text[i];
+    if (inQ){
+      if (c === '"'){ if (text[i+1] === '"'){ cur += '"'; i++; } else inQ = false; }
+      else cur += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ","){ row.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r"){
+      if (c === "\r" && text[i+1] === "\n") i++;
+      row.push(cur); cur = "";
+      if (row.length && row.some(function(x){ return x !== ""; })) rows.push(row);
+      row = [];
+    } else cur += c;
+  }
+  row.push(cur);
+  if (row.length && row.some(function(x){ return x !== ""; })) rows.push(row);
+  return rows;
+}
+
+/* CSV (GitHub report) → internal rows */
+function csvToRows(text){
+  var p = parseCSV(text);
+  if (!p.length) return [];
+  var h = p[0].map(function(x){ return x.trim(); });
+  function col(c){ var i = h.indexOf(c); return i >= 0 ? i : -1; }
+  var idx = {
+    S: col("Symbol"), N: col("Name"), T: col("Type"), St: col("Status"),
+    Z: col("ZoneFormed"), A: col("ZoneAgeM"), L: col("LTP"),
+    Lo: col("TodayLow"), P: col("Proximal"), D: col("Distal"), G: col("GapPct")
+  };
+  if (idx.S < 0) return [];
+  var out = [];
+  for (var r = 1; r < p.length; r++){
+    var rr = p[r];
+    function g(i){ return i >= 0 && rr[i] !== undefined ? rr[i].trim() : ""; }
+    out.push({
+      S: g(idx.S), N: g(idx.N), T: g(idx.T), St: g(idx.St), Z: g(idx.Z),
+      A: parseInt(g(idx.A), 10) || 0, L: num(g(idx.L)), Lo: num(g(idx.Lo)),
+      P: num(g(idx.P)), D: num(g(idx.D)), G: num(g(idx.G))
+    });
+  }
+  return out;
+}
+
+/* embedded snapshot → internal rows */
+function snapRows(){
+  var el = $("snapshot");
+  if (!el) return [];
+  try {
+    var obj = JSON.parse(el.textContent);
+    return obj.rows || [];
+  } catch(e){ return []; }
+}
+
+/* ================= GitHub fetches ================= */
+function fetchT(url, ms){
+  var ctrl = new AbortController();
+  var t = setTimeout(function(){ ctrl.abort(); }, ms || 8000);
+  return fetch(url, { signal: ctrl.signal, headers: { "Accept": "application/vnd.github+json" } })
+    .finally(function(){ clearTimeout(t); });
+}
+function ghApi(path){
+  return fetchT("https://api.github.com/repos/" + REPO.owner + "/" + REPO.repo + path, 7000);
+}
+function rawUrl(name){
+  return "https://raw.githubusercontent.com/" + REPO.owner + "/" + REPO.repo + "/" +
+         REPO.branch + "/reports/" + name;
+}
+
+/* API se reports list karo; fail ho to raw URLs probe karo (rate-limit-proof) */
+async function listDates(){
+  var dates = [];
+  try {
+    var res = await ghApi("/contents/reports");
+    if (res.ok){
+      var arr = await res.json();
+      dates = (Array.isArray(arr) ? arr : [])
+        .filter(function(f){ return /^zone_report_\d{4}-\d{2}-\d{2}\.csv$/.test(f.name || ""); })
+        .map(function(f){ return f.name.match(/^zone_report_(\d{4}-\d{2}-\d{2})\.csv$/)[1]; })
+        .sort();
+      if (dates.length) return dates;
+    }
+  } catch(e){}
+  // fallback: last 14 din ke reports raw se probe karo (koi rate limit nahi)
+  var today = new Date();
+  var found = [];
+  for (var i = 0; i < 14; i++){
+    var d = new Date(today.getTime() - i * 86400000);
+    var ds = d.toISOString().slice(0, 10);
+    try {
+      var r = await fetchT(rawUrl("zone_report_" + ds + ".csv"), 4000);
+      if (r.ok) found.push(ds);
+    } catch(e){}
+  }
+  return found.sort();
+}
+
+async function loadCsv(name){
+  var res = await fetchT(rawUrl(name), 10000);
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return await res.text();
+}
+
+/* ================= main load ================= */
+async function loadAll(force){
+  $("srcBadge").textContent = "…";
+  var snap = snapRows();
+
+  /* auto-generated dashboard: network ki zaroorat nahi, seedha embedded data */
+  if (MODE.embedded){
+    ALL = snap;
+    DATE = snapDate();
+    SRC = "snap";
+    renderDates([], DATE);
+    updateBadge();
+    applyFilter();
+    return;
+  }
+
+  var dates = await listDates();
+  var chosen = null;
+
+  if (dates && dates.length){
+    if (force && DATE){
+      // refresh: latest hi re-load karo
+      chosen = dates[dates.length - 1];
+    } else {
+      chosen = DATE && dates.indexOf(DATE) >= 0 ? DATE : dates[dates.length - 1];
+    }
+    try {
+      var txt = await loadCsv("zone_report_" + chosen + ".csv");
+      ALL = csvToRows(txt);
+      DATE = chosen;
+      SRC = "live";
+    } catch(e){
+      // live fail → snapshot
+      if (snap.length){ ALL = snap; DATE = snapDate(); SRC = "snap"; }
+      else { ALL = []; DATE = chosen; SRC = "none"; }
+      showBanner("🔒 GitHub se live data nahi mila — repo <b>private</b> hai ya internet issue hai. Aaj ka <b>snapshot</b> dikhaya ja raha hai. Live daily update ke liye repo ko <b>public</b> karein (Settings → General → Danger Zone → Change visibility → Make public).");
+    }
+    renderDates(dates, DATE);
+  } else {
+    if (snap.length){ ALL = snap; DATE = snapDate(); SRC = "snap"; }
+    else { ALL = []; DATE = null; SRC = "none"; }
+    renderDates([], DATE);
+    if (SRC === "snap"){
+      showBanner("🔒 Repo se report list nahi mili (repo private hai ya abhi report nahi bani). Aaj ka <b>snapshot</b> dikhaya ja raha hai. Repo ko <b>public</b> karein aur <b>Refresh</b> dabayein.");
+    } else if (SRC === "none"){
+      showBanner("⚠️ Data nahi mila. Repo public hai to GitHub Actions ka report banne ka wait karein (21:30 IST ke baad) ya repo ko public karke Refresh dabayein.");
+    }
+  }
+
+  updateBadge();
+  applyFilter();
+}
+
+function snapDate(){
+  try {
+    var obj = JSON.parse($("snapshot").textContent);
+    return obj.date || null;
+  } catch(e){ return null; }
+}
+
+/* auto-generated mode (make_dashboard.py se) — network ke bina seedha data dikhao */
+function readMode(){
+  try {
+    var el = document.getElementById("mode");
+    if (!el) return {};
+    return JSON.parse(el.textContent) || {};
+  } catch(e){ return {}; }
+}
+var MODE = readMode();
+
+function updateBadge(){
+  var b = $("srcBadge");
+  if (SRC === "live"){ b.textContent = "● LIVE · GitHub"; b.className = "badge live"; }
+  else if (SRC === "snap"){ b.textContent = MODE.embedded ? "● AUTO · Today's Report" : "● SNAPSHOT"; b.className = "badge snap"; }
+  else { b.textContent = "NO DATA"; b.className = "badge"; }
+}
+
+function showBanner(html){
+  var b = $("banner");
+  b.innerHTML = html;
+  b.classList.add("show");
+}
+
+function renderDates(dates, cur){
+  var el = $("dates");
+  el.innerHTML = "";
+  function chip(d, label){
+    var c = document.createElement("div");
+    c.className = "chip" + (d === cur ? " on" : "");
+    c.textContent = label;
+    c.onclick = function(){ selectDate(d); };
+    el.appendChild(c);
+  }
+  if (!dates.length && cur){
+    chip(cur, cur + " · snapshot");
+    return;
+  }
+  dates.forEach(function(d){ chip(d, d); });
+  var live = document.createElement("div");
+  live.className = "chip";
+  live.style.background = "transparent";
+  live.style.borderColor = "transparent";
+  live.style.cursor = "default";
+  live.textContent = SRC === "live" ? "● live (GitHub)" : "○ snapshot";
+  el.appendChild(live);
+}
+
+async function selectDate(d){
+  DATE = d;
+  try {
+    var txt = await loadCsv("zone_report_" + d + ".csv");
+    ALL = csvToRows(txt);
+    SRC = "live";
+    $("banner").classList.remove("show");
+  } catch(e){
+    var snap = snapRows();
+    ALL = snap; SRC = "snap";
+    showBanner("🔒 Yeh date live fetch nahi hui (private/offline) — snapshot dikhaya ja raha hai.");
+  }
+  updateBadge();
+  applyFilter();
+  renderDates(await listDates(), DATE);
+}
+
+/* ================= render ================= */
+function filtered(){
+  var q = $("q").value.trim().toLowerCase();
+  var t = $("fType").value, st = $("fStatus").value;
+  var age = parseInt($("fAge").value, 10) || 0;
+  var pr = parseFloat($("fPrice").value) || 0;
+  return ALL.filter(function(r){
+    if (q && (r.S.toLowerCase().indexOf(q) < 0) && (r.N.toLowerCase().indexOf(q) < 0)) return false;
+    if (t && r.T !== t) return false;
+    if (st && r.St !== st) return false;
+    if (age && r.A > age) return false;
+    if (pr && r.L < pr) return false;
+    return true;
+  });
+}
+
+function applyFilter(){
+  var rows = filtered();
+  renderCards(rows);
+  renderChart(rows);
+  renderTable(rows);
+  $("count").textContent = rows.length + " / " + ALL.length + " rows";
+}
+
+function renderCards(rows){
+  var c = { "DEMAND|IN_ZONE": 0, "SUPPLY|IN_ZONE": 0, NEAR: 0, SWEPT: 0 };
+  rows.forEach(function(r){
+    if (r.St === "IN_ZONE") c[r.T + "|IN_ZONE"]++;
+    else if (r.St === "NEAR") c.NEAR++;
+    else c.SWEPT++;
+  });
+  $("cDemand").textContent = c["DEMAND|IN_ZONE"];
+  $("cSupply").textContent = c["SUPPLY|IN_ZONE"];
+  $("cNear").textContent = c.NEAR;
+  $("cSwept").textContent = c.SWEPT;
+  $("cTotal").textContent = rows.length;
+  $("cDate").textContent = DATE ? DATE : "—";
+}
+
+function renderChart(rows){
+  var el = $("barchart");
+  var groups = [
+    { label: "Demand IN ZONE", v: rows.filter(function(r){ return r.T === "DEMAND" && r.St === "IN_ZONE"; }).length, c: "var(--green)" },
+    { label: "Supply IN ZONE", v: rows.filter(function(r){ return r.T === "SUPPLY" && r.St === "IN_ZONE"; }).length, c: "var(--red)" },
+    { label: "NEAR", v: rows.filter(function(r){ return r.St === "NEAR"; }).length, c: "var(--amber)" },
+    { label: "SWEPT", v: rows.filter(function(r){ return r.St === "SWEPT"; }).length, c: "var(--purple)" }
+  ];
+  var max = 1;
+  groups.forEach(function(g){ if (g.v > max) max = g.v; });
+  el.innerHTML = groups.map(function(g){
+    var h = Math.max(6, Math.round(g.v / max * 44));
+    return '<div class="barcell"><div class="bartxt">' + g.v + '</div>' +
+           '<div class="barwrap"><div class="bar" style="height:' + h + 'px;background:' + g.c + '"></div></div>' +
+           '<div class="barlbl" style="color:' + g.c + '">' + g.label + '</div></div>';
+  }).join("");
+}
+
+function pill(cls, txt){
+  return '<span class="pill ' + cls + '">' + txt + "</span>";
+}
+
+function renderTable(rows){
+  var tb = $("tbody");
+  if (!rows.length){
+    tb.innerHTML = '<tr><td colspan="12" class="empty">Koi stock nahi mila — filters badlein ya data aane ka wait karein 📭</td></tr>';
+    return;
+  }
+  var k = SORT.k, dir = SORT.dir;
+  var sorted = rows.slice().sort(function(a, b){
+    var av = a[k], bv = b[k], r;
+    if (k === "St"){ r = (STATUS_PRIO[av] != null ? STATUS_PRIO[av] : 9) - (STATUS_PRIO[bv] != null ? STATUS_PRIO[bv] : 9); }
+    else if (k === "A" || k === "L" || k === "Lo" || k === "P" || k === "D" || k === "G"){ r = (av || 0) - (bv || 0); }
+    else { r = String(av).localeCompare(String(bv)); }
+    return r * dir;
+  });
+  tb.innerHTML = sorted.map(function(r){
+    var top = Math.max(r.P, r.D), bot = Math.min(r.P, r.D);
+    var gapCls = r.G > 0 ? "pos" : "";
+    var tv = "https://www.tradingview.com/chart/?symbol=NSE%3A" + encodeURIComponent(r.S);
+    return "<tr>" +
+      '<td class="sym"><a href="' + tv + '" target="_blank" title="TradingView par kholen">' + esc(r.S) + "</a></td>" +
+      "<td><span class='nm' title='" + esc(r.N) + "'>" + esc(r.N) + "</span></td>" +
+      "<td>" + pill(r.T === "DEMAND" ? "D" : "S", r.T) + "</td>" +
+      "<td>" + pill(r.St, r.St.replace("_", " ")) + "</td>" +
+      "<td>" + r.Z + "</td>" +
+      "<td>" + r.A + "</td>" +
+      '<td class="num">' + fmt(r.L, 2) + "</td>" +
+      '<td class="num">' + fmt(r.Lo, 2) + "</td>" +
+      '<td class="num">' + fmt(top, 2) + "</td>" +
+      '<td class="num">' + fmt(bot, 2) + "</td>" +
+      '<td class="num ' + gapCls + '">' + fmt(r.G, 2) + "%</td>" +
+      '<td><a class="tv" href="' + tv + '" target="_blank" title="Chart kholen">📈</a></td>' +
+      "</tr>";
+  }).join("");
+}
+
+function esc(s){
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* sorting */
+document.querySelectorAll("thead th[data-k]").forEach(function(th){
+  th.onclick = function(){
+    var k = th.getAttribute("data-k");
+    if (SORT.k === k) SORT.dir *= -1; else { SORT.k = k; SORT.dir = 1; }
+    document.querySelectorAll("thead th .ar").forEach(function(s){ s.textContent = ""; });
+    var ar = th.querySelector(".ar");
+    ar.textContent = SORT.dir === 1 ? "▲" : "▼";
+    applyFilter();
+  };
+});
+
+/* ================= actions ================= */
+function copyWatchlist(){
+  var rows = filtered();
+  if (!rows.length){ alert("List khali hai."); return; }
+  var txt = rows.map(function(r){ return "NSE:" + r.S; }).join("\n");
+  copyText(txt, rows.length + " symbols copied (NSE: format) — TradingView → Watchlist → import par paste karein");
+}
+
+function copyText(txt, msg){
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){
+      toast(msg);
+    }).catch(function(){ legacyCopy(txt, msg); });
+  } else legacyCopy(txt, msg);
+}
+
+function legacyCopy(txt, msg){
+  var ta = document.createElement("textarea");
+  ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); toast(msg); } catch(e){ alert("Copy nahi hua — text neeche hai:\n\n" + txt); }
+  document.body.removeChild(ta);
+}
+
+function exportCSV(){
+  var rows = filtered();
+  if (!rows.length){ alert("List khali hai."); return; }
+  var head = ["Symbol","Name","Type","Status","ZoneFormed","ZoneAgeM","LTP","TodayLow","Proximal","Distal","GapPct"];
+  var lines = [head.join(",")];
+  rows.forEach(function(r){
+    lines.push([r.S, '"' + r.N.replace(/"/g, '""') + '"', r.T, r.St, r.Z, r.A,
+      r.L, r.Lo, r.P, r.D, r.G].join(","));
+  });
+  var blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "zone_report_" + (DATE || "latest") + "_filtered.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 800);
+}
+
+function clearFilters(){
+  ["q","fType","fStatus","fAge","fPrice"].forEach(function(id){ $(id).value = ""; });
+  applyFilter();
+}
+
+/* toast */
+var toastEl = null;
+function toast(msg){
+  if (!toastEl){
+    toastEl = document.createElement("div");
+    toastEl.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);" +
+      "background:#1d2434;border:1px solid #33415a;color:#fff;padding:11px 18px;border-radius:10px;" +
+      "font-size:13px;z-index:99;max-width:92%;box-shadow:0 8px 24px rgba(0,0,0,.5)";
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.style.display = "block";
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(function(){ toastEl.style.display = "none"; }, 4000);
+}
+
+/* init */
+loadAll(false);
+</script>
+</body>
+</html>
