@@ -109,9 +109,43 @@
 
   footer{margin-top:22px;color:var(--dim);font-size:11px;line-height:1.7;border-top:1px solid var(--line);padding-top:14px}
   footer b{color:var(--mut)}
+
+  /* ---------- password lock ---------- */
+  #lock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#0b0e14 0%,#0e1a24 100%);padding:20px}
+  #lock.hidden{display:none}
+  .lock-card{width:min(360px,92%);background:var(--card);border:1px solid #2a3a55;border-radius:16px;
+    padding:34px 28px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+  .lock-emoji{font-size:42px;line-height:1}
+  .lock-title{font-size:18px;font-weight:800;margin-top:12px}
+  .lock-sub{font-size:12.5px;color:var(--mut);margin:7px 0 20px;line-height:1.5}
+  .lock-input{width:100%;background:#0b0e14;border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:13px 14px;font-size:17px;text-align:center;outline:none;letter-spacing:3px}
+  .lock-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,189,133,.15)}
+  .lock-btn{width:100%;margin-top:13px;background:linear-gradient(135deg,#1f8f64,#2ebd85);border:none;
+    color:#04120c;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer}
+  .lock-btn:active{transform:translateY(1px)}
+  .lock-err{color:#ff8a80;font-size:12px;margin-top:11px;min-height:16px;font-weight:600}
+  .lock-hint{font-size:10.5px;color:var(--dim);margin-top:14px}
+  .shake{animation:shk .4s}
+  @keyframes shk{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 </style>
 </head>
 <body>
+
+<!-- 🔒 Password lock screen -->
+<div id="lock">
+  <div class="lock-card">
+    <div class="lock-emoji">🔒</div>
+    <div class="lock-title">Monthly Zone Dashboard</div>
+    <div class="lock-sub">Is dashboard ko dekhne ke liye<br>password daalein</div>
+    <input id="pw" class="lock-input" type="password" placeholder="••••••"
+           autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="pwBtn" class="lock-btn">🔓 Unlock</button>
+    <div id="pwErr" class="lock-err"></div>
+    <div class="lock-hint">Private dashboard — only authorised access</div>
+  </div>
+</div>
 
 <header>
   <div class="logo">📊 Monthly Zone <span>Dashboard</span>
@@ -120,6 +154,7 @@
   <div class="hright">
     <span id="srcBadge" class="badge">…</span>
     <button class="btn" onclick="loadAll(true)">🔄 Refresh</button>
+    <button class="btn" id="lockBtn" title="Lock karein">🔒</button>
   </div>
 </header>
 
@@ -635,8 +670,104 @@ function toast(msg){
   toastEl._t = setTimeout(function(){ toastEl.style.display = "none"; }, 4000);
 }
 
+/* ================= password gate ================= */
+var PASSWORD_HASH = "570b795f525cbb1e0f2e8e27334097a7371d251bf66b315c93b70e67f731ad64";
+var lockKey = "mzd_unlocked_v1";
+
+function sha256(ascii){
+  function rightRotate(v, a){ return (v >>> a) | (v << (32 - a)); }
+  var mathPow = Math.pow, maxWord = mathPow(2, 32), len = "length";
+  var i, j, result = "";
+  var words = [], asciiBitLength = ascii[len] * 8;
+  var hash = sha256.h = sha256.h || [];
+  var k = sha256.k = sha256.k || [];
+  var primeCounter = k[len];
+  var isComposite = {};
+  for (var candidate = 2; primeCounter < 64; candidate++){
+    if (!isComposite[candidate]){
+      for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1/3) * maxWord) | 0;
+    }
+  }
+  ascii += "\x80";
+  while (ascii[len] % 64 - 56) ascii += "\x00";
+  for (i = 0; i < ascii[len]; i++){
+    j = ascii.charCodeAt(i);
+    if (j >> 8) return "";
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words[len]] = ((asciiBitLength / maxWord) | 0);
+  words[words[len]] = (asciiBitLength);
+  for (j = 0; j < words[len];){
+    var w = words.slice(j, j += 16);
+    var oldHash = hash;
+    hash = hash.slice(0, 8);
+    for (i = 0; i < 64; i++){
+      var w15 = w[i - 15], w2 = w[i - 2];
+      var a = hash[0], e = hash[4];
+      var temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+        + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i]
+        + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+      var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+    for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (i = 0; i < 8; i++){
+    for (j = 3; j + 1; j--){
+      var b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? 0 : "") + b.toString(16);
+    }
+  }
+  return result;
+}
+
+function tryUnlocked(){
+  try { return sessionStorage.getItem(lockKey) === "1"; } catch(e){ return false; }
+}
+function setUnlocked(){
+  try { sessionStorage.setItem(lockKey, "1"); } catch(e){}
+}
+function showLock(){
+  $("lock").classList.remove("hidden");
+  var i = $("pw");
+  if (i){ i.value = ""; setTimeout(function(){ i.focus(); }, 60); }
+}
+function hideLock(){ $("lock").classList.add("hidden"); }
+
+function checkPw(){
+  var v = $("pw").value;
+  var h = sha256(v);
+  if (h === PASSWORD_HASH){
+    setUnlocked();
+    hideLock();
+    startApp();
+  } else {
+    $("pwErr").textContent = "❌ Galat password — dobara try karein";
+    $("lock").classList.add("shake");
+    setTimeout(function(){ $("lock").classList.remove("shake"); }, 450);
+    $("pw").value = "";
+    $("pw").focus();
+  }
+}
+
+function relock(){
+  try { sessionStorage.removeItem(lockKey); } catch(e){}
+  showLock();
+}
+
 /* init */
-loadAll(false);
+$("pwBtn").addEventListener("click", function(e){ e.preventDefault(); checkPw(); });
+$("pw").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); checkPw(); } });
+if (document.getElementById("lockBtn")){
+  document.getElementById("lockBtn").addEventListener("click", relock);
+}
+
+function startApp(){ loadAll(false); }
+
+if (tryUnlocked()){ hideLock(); startApp(); } else { showLock(); }
 </script>
 </body>
 </html>
