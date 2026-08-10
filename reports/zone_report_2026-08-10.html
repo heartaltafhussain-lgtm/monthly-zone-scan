@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Monthly Zone Scan - 2026-08-10</title>
+<style>
+ body{font-family:Segoe UI,Arial,sans-serif;background:#0e1117;color:#e6e6e6;margin:0;padding:24px}
+ h1{font-size:20px;margin:0 0 4px} .sub{color:#9aa4b2;font-size:13px;margin-bottom:16px}
+ .card{background:#161b24;border:1px solid #232b38;border-radius:10px;padding:14px 18px;margin-bottom:16px}
+ .grid{display:flex;gap:24px;flex-wrap:wrap;font-size:13px}
+ .grid b{font-size:24px;display:block}
+ input{background:#0e1117;border:1px solid #2a3444;color:#eee;padding:8px 12px;border-radius:6px;width:280px;font-size:13px}
+ table{border-collapse:collapse;width:100%;font-size:12.5px}
+ th{background:#1b2230;text-align:left;padding:7px 8px;position:sticky;top:0;color:#c8d2e0;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+ td{padding:6px 8px;border-bottom:1px solid #1d2532}
+ tr:hover td{background:#182031}
+ .pill{padding:2px 9px;border-radius:20px;color:#fff;font-size:11px;font-weight:700}
+</style></head><body>
+<h1>📊 Monthly Demand / Supply Zone Touch Report</h1>
+<div class="sub">NSE India • Report date: 2026-08-10 • Last 1 trading day(s) • 2086 symbols scanned</div>
+<div class="card"><div class="grid">
+ <div><b style="color:#27ae60">3</b>IN ZONE (aaj touch)</div>
+ <div><b style="color:#f39c12">0</b>NEAR (0.5% andar)</div>
+ <div><b style="color:#8e44ad">0</b>SWEPT (below distal)</div>
+ <div><b style="color:#9aa4b2">2086</b>Symbols scanned</div>
+</div></div>
+<div class="card"><input id="q" placeholder="Filter: symbol / name / status..." onkeyup="f()"></div>
+<div style="overflow:auto;max-height:70vh"><table id="t">
+<thead><tr><th>Symbol</th><th>Name</th><th>Type</th><th>Status</th><th>Zone Formed</th><th>Age (M)</th><th>LTP</th><th>Today Low</th><th style="text-align:right">Zone Top</th><th style="text-align:right">Zone Bottom</th><th style="text-align:right">Dist from Zone</th></tr></thead>
+<tbody><tr><td>ARTEMISMED</td><td>Artemis Medicare Services Limited</td><td>SUPPLY</td><td style='color:#27ae60;font-weight:700'>IN_ZONE</td><td>2025-02</td><td>18</td><td>315.95</td><td>313.65</td><td style='text-align:right'>348.79</td><td style='text-align:right'>313.71</td><td style='text-align:right'>0.00%</td></tr>
+<tr><td>GUJRAFFIA</td><td>Gujarat Raffia Industries Limited</td><td>DEMAND</td><td style='color:#27ae60;font-weight:700'>IN_ZONE</td><td>2025-10</td><td>10</td><td>39.71</td><td>39.02</td><td style='text-align:right'>40.51</td><td style='text-align:right'>35.45</td><td style='text-align:right'>0.00%</td></tr>
+<tr><td>ZODIAC</td><td>Zodiac Energy Limited</td><td>DEMAND</td><td style='color:#27ae60;font-weight:700'>IN_ZONE</td><td>2026-04</td><td>4</td><td>250.80</td><td>248.55</td><td style='text-align:right'>252.00</td><td style='text-align:right'>205.55</td><td style='text-align:right'>0.00%</td></tr></tbody></table></div>
+<script>
+function f(){var q=document.getElementById('q').value.toLowerCase();
+document.querySelectorAll('#t tbody tr').forEach(function(r){r.style.display=r.innerText.toLowerCase().indexOf(q)>-1?'':'none'})}
+</script>
+</body></html>
