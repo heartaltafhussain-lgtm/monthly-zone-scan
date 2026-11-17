@@ -24,8 +24,8 @@
 <div class="card"><input id="q" placeholder="Filter: symbol / name / status..." onkeyup="f()"></div>
 <div style="overflow:auto;max-height:70vh"><table id="t">
 <thead><tr><th>Symbol</th><th>Name</th><th>Type</th><th>Status</th><th>Zone Formed</th><th>Age (M)</th><th>LTP</th><th>Today Low</th><th style="text-align:right">Zone Top</th><th style="text-align:right">Zone Bottom</th><th style="text-align:right">Dist from Zone</th></tr></thead>
-<tbody><tr><td>ARTEMISMED</td><td>Artemis Medicare Services Limited</td><td>SUPPLY</td><td style='color:#27ae60;font-weight:700'>IN_ZONE</td><td>2025-02</td><td>21</td><td>327.70</td><td>315.05</td><td style='text-align:right'>348.79</td><td style='text-align:right'>313.71</td><td style='text-align:right'>0.00%</td></tr>
-<tr><td>ZODIAC</td><td>Zodiac Energy Limited</td><td>DEMAND</td><td style='color:#8e44ad;font-weight:700'>SWEPT</td><td>2026-04</td><td>7</td><td>205.23</td><td>204.00</td><td style='text-align:right'>251.15</td><td style='text-align:right'>204.85</td><td style='text-align:right'>0.00%</td></tr></tbody></table></div>
+<tbody><tr><td>ZODIAC</td><td>Zodiac Energy Limited</td><td>DEMAND</td><td style='color:#27ae60;font-weight:700'>IN_ZONE</td><td>2026-04</td><td>7</td><td>206.96</td><td>205.51</td><td style='text-align:right'>251.15</td><td style='text-align:right'>204.85</td><td style='text-align:right'>0.00%</td></tr>
+<tr><td>ARTEMISMED</td><td>Artemis Medicare Services Limited</td><td>SUPPLY</td><td style='color:#8e44ad;font-weight:700'>SWEPT</td><td>2025-02</td><td>21</td><td>348.75</td><td>326.50</td><td style='text-align:right'>348.79</td><td style='text-align:right'>313.71</td><td style='text-align:right'>0.00%</td></tr></tbody></table></div>
 <script>
 function f(){var q=document.getElementById('q').value.toLowerCase();
 document.querySelectorAll('#t tbody tr').forEach(function(r){r.style.display=r.innerText.toLowerCase().indexOf(q)>-1?'':'none'})}
